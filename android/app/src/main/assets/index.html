@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>مولّد أكواد الشحن</title>
+<style>
+  :root{
+    --bg:#0f1720; --card:#17212b; --card2:#1e2a36; --text:#eaf1f8; --muted:#8fa3b3;
+    --accent:#2f8f6b; --accent2:#3aa87e; --danger:#c0514a; --border:#2a3b48; --input:#0f1a22;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Segoe UI',Tahoma,Arial,sans-serif;
+       -webkit-tap-highlight-color:transparent;padding-bottom:24px;}
+  header{background:linear-gradient(135deg,#1d4e3f,#17212b);padding:18px 16px 14px;text-align:center;
+         border-bottom:1px solid var(--border);}
+  header h1{margin:0;font-size:19px;}
+  header p{margin:4px 0 0;color:var(--muted);font-size:12px;}
+  nav{display:flex;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5;}
+  nav button{flex:1;background:none;border:none;color:var(--muted);padding:12px 4px;font-size:13px;
+             border-bottom:3px solid transparent;}
+  nav button.active{color:var(--text);border-bottom-color:var(--accent2);font-weight:600;}
+  main{padding:14px;max-width:520px;margin:0 auto;}
+  .tab{display:none;} .tab.active{display:block;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;}
+  .card h3{margin:0 0 10px;font-size:14px;color:var(--muted);font-weight:600;}
+  label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px;}
+  input,select{width:100%;padding:11px 10px;border-radius:8px;border:1px solid var(--border);
+        background:var(--input);color:var(--text);font-size:15px;direction:ltr;text-align:right;}
+  select{direction:rtl;text-align:right;}
+  .row{display:flex;gap:10px;}
+  .row>div{flex:1;}
+  button.btn{width:100%;padding:13px;border:none;border-radius:9px;background:var(--accent);color:#fff;
+             font-size:15px;font-weight:600;margin-top:14px;}
+  button.btn:active{background:var(--accent2);}
+  button.btn.secondary{background:var(--card2);color:var(--text);border:1px solid var(--border);}
+  button.btn.danger{background:var(--danger);}
+  .result{background:var(--card2);border:1px solid var(--accent);border-radius:10px;padding:14px;margin-top:14px;text-align:center;}
+  .result .token{font-size:22px;letter-spacing:2px;font-family:'Consolas',monospace;direction:ltr;color:#bfe9d4;margin:6px 0;}
+  .result .sub{font-size:12px;color:var(--muted);}
+  .actions{display:flex;gap:8px;margin-top:10px;}
+  .actions button{flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;}
+  .warn{background:#3a2a16;border:1px solid #6b4a1f;color:#f0c98b;border-radius:10px;padding:10px 12px;font-size:12.5px;margin-bottom:14px;line-height:1.7;}
+  .err{background:#3a1616;border:1px solid #6b1f1f;color:#f0a0a0;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px;}
+  .ok{background:#163a28;border:1px solid #1f6b43;color:#a0f0c0;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px;}
+  .hint{font-size:11.5px;color:var(--muted);margin-top:3px;}
+  .toggle{display:flex;align-items:center;gap:8px;margin-top:12px;}
+  .toggle input{width:auto;}
+  .footer-note{text-align:center;color:var(--muted);font-size:11px;margin-top:18px;line-height:1.8;}
+  #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#222;color:#fff;
+         padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .25s;z-index:50;}
+  #toast.show{opacity:1;}
+  .adv summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px;}
+  table.calib{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+  table.calib td,table.calib th{border-bottom:1px solid var(--border);padding:5px;text-align:center;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ مولّد أكواد الشحن</h1>
+  <p>يعمل بالكامل على جهازك بدون إنترنت</p>
+</header>
+
+<nav>
+  <button class="tabbtn active" data-tab="gen">توليد الكود</button>
+  <button class="tabbtn" data-tab="settings">الإعدادات</button>
+  <button class="tabbtn" data-tab="calib">معايرة / تحقق</button>
+</nav>
+
+<main>
+
+<div class="warn" id="setupWarn" style="display:none">
+  لم تُدخل بيانات المجموعة (SGC / VK1 / VK2 ...) بعد. افتح تبويب <b>الإعدادات</b> أولاً وأدخلها من البرنامج الأصلي، وإلا فلن تتطابق الأكواد مع العداد.
+</div>
+
+<!-- ======= TAB: GENERATE ======= -->
+<div class="tab active" id="tab-gen">
+  <div class="card">
+    <h3>بيانات العملية</h3>
+    <label>رقم العداد (Meter No)</label>
+    <input id="meterNo" inputmode="numeric" placeholder="مثال: 0128234600145" maxlength="13">
+    <div class="hint">13 رقمًا كما يظهر على العداد.</div>
+
+    <label>الكمية (كيلوواط/ساعة)</label>
+    <input id="kwh" inputmode="decimal" placeholder="مثال: 400">
+
+    <details class="adv">
+      <summary>خيارات متقدمة (Class / Sub / Rnd)</summary>
+      <div class="row">
+        <div>
+          <label>Class</label>
+          <select id="cls"><option value="0">0 - شراء عادي</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select>
+        </div>
+        <div>
+          <label>SubClass</label>
+          <input id="sub" inputmode="numeric" value="0" maxlength="2">
+        </div>
+        <div>
+          <label>Rnd</label>
+          <input id="rnd" inputmode="numeric" placeholder="تلقائي">
+        </div>
+      </div>
+      <label>رقم العملية TID (تلقائي من الوقت الحالي، يمكن تعديله)</label>
+      <input id="tid" inputmode="numeric">
+      <div class="hint">⚠️ مبني على افتراض أن TID = عدد الدقائق منذ 2014-01-01. هذا الجزء غير مؤكد من داخل الشفرة الأصلية — إن لم يقبله العداد أو الخادم، استخدم تبويب "معايرة" لإيجاد القيمة الصحيحة انطلاقاً من كود حقيقي تعرف مدخلاته.</div>
+    </details>
+
+    <button class="btn" id="genBtn">توليد الكود</button>
+  </div>
+
+  <div class="result" id="resultBox" style="display:none">
+    <div class="sub">كود الشحن (Token)</div>
+    <div class="token" id="tokenOut">-</div>
+    <div class="sub" id="metaOut"></div>
+    <div class="actions">
+      <button id="copyBtn">📋 نسخ</button>
+      <button id="shareBtn">↗️ إرسال</button>
+    </div>
+  </div>
+  <div id="genErr"></div>
+
+  <div class="footer-note">
+    هذا التطبيق أداة تقنية مساعدة لحامل الترخيص الأصلي فقط. تأكد من حقك القانوني في توليد أكواد الشحن لهذه العدادات قبل الاستخدام.
+  </div>
+</div>
+
+<!-- ======= TAB: SETTINGS ======= -->
+<div class="tab" id="tab-settings">
+  <div class="card">
+    <h3>بيانات المجموعة (من البرنامج الأصلي)</h3>
+    <div class="hint">انسخها من شاشة إعداد النظام في البرنامج القديم (System Init Set) أو من ملف MeterClient.ini بعد فك التشفير. تُحفظ على جهازك فقط ولا تُرسل لأي خادم.</div>
+
+    <label>IIN</label>
+    <input id="s_iin" placeholder="0000">
+
+    <label>Supply Group Code (SGC)</label>
+    <input id="s_sgc" placeholder="مثال: 200420" maxlength="6">
+
+    <label>Tariff Index (TI)</label>
+    <input id="s_ti" placeholder="مثال: 01" maxlength="2">
+
+    <label>Key Revision Number (KRN)</label>
+    <input id="s_krn" placeholder="مثال: 2" maxlength="1">
+
+    <label>Key Type (KT)</label>
+    <input id="s_kt" placeholder="رقم سداسي واحد 0-F" maxlength="1">
+
+    <label>VK1 (Vending Key 1) — هكس 16 خانة</label>
+    <input id="s_vk1" maxlength="16" placeholder="0000000000000000">
+
+    <label>DKGA (طريقة اشتقاق المفتاح)</label>
+    <select id="s_dkga">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3" selected>3 (الأكثر شيوعًا، يتطلب VK2)</option>
+    </select>
+
+    <div id="vk2wrap">
+      <label>VK2 (Vending Key 2) — هكس 16 خانة</label>
+      <input id="s_vk2" maxlength="16" placeholder="0000000000000000">
+    </div>
+
+    <button class="btn" id="saveSettings">حفظ الإعدادات</button>
+    <button class="btn secondary" id="exportSettings">تصدير نسخة احتياطية (JSON)</button>
+    <button class="btn danger" id="wipeSettings">مسح كل البيانات من الجهاز</button>
+    <div id="setErr"></div>
+  </div>
+</div>
+
+<!-- ======= TAB: CALIBRATION ======= -->
+<div class="tab" id="tab-calib">
+  <div class="card">
+    <h3>معايرة باستخدام كود حقيقي</h3>
+    <div class="hint">
+      أدخل كودًا صدر فعلاً من البرنامج الأصلي لهذا العداد، مع نفس المدخلات (رقم العداد والكمية ووقت الإصدار تقريبًا)،
+      وسيجرّب التطبيق كل احتمالات Rnd وTID القريبة من ذلك الوقت باستخدام إعداداتك الحالية (SGC/VK1/VK2...) ليخبرك
+      إن كانت متطابقة، وما هو TID الصحيح الذي يجب استخدامه مستقبلاً.
+    </div>
+
+    <label>رقم العداد</label>
+    <input id="c_meter" inputmode="numeric" maxlength="13">
+
+    <label>الكمية (Buy Power)</label>
+    <input id="c_kwh" inputmode="decimal">
+
+    <label>تاريخ ووقت الإصدار (كما في البرنامج)</label>
+    <input id="c_dt" type="datetime-local">
+
+    <label>الكود الحقيقي (20 رقمًا، بمسافات أو بدونها)</label>
+    <input id="c_token" placeholder="0657 8201 3703 8142 4407">
+
+    <div class="row">
+      <div><label>نطاق البحث بالدقائق ±</label><input id="c_window" value="10" inputmode="numeric"></div>
+      <div><label>Class</label><input id="c_cls" value="0" inputmode="numeric"></div>
+    </div>
+
+    <button class="btn" id="calibBtn">ابدأ المعايرة</button>
+    <div id="calibOut"></div>
+  </div>
+</div>
+
+</main>
+
+<div id="toast"></div>
+
+<script src="sts-core.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600);}
+
+// ---------- tabs ----------
+document.querySelectorAll('.tabbtn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tabbtn').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active'); $('tab-'+b.dataset.tab).classList.add('active');
+}));
+
+// ---------- settings persistence ----------
+const SKEY='sts_settings_v1';
+function loadSettings(){ try{ return JSON.parse(localStorage.getItem(SKEY)||'{}'); }catch(e){ return {}; } }
+function saveSettingsObj(o){ localStorage.setItem(SKEY,JSON.stringify(o)); }
+
+function fillSettingsForm(s){
+  $('s_iin').value=s.iin||'0000';
+  $('s_sgc').value=s.sgc||'';
+  $('s_ti').value=s.ti||'';
+  $('s_krn').value=s.krn||'';
+  $('s_kt').value=s.kt||'';
+  $('s_vk1').value=s.vk1||'';
+  $('s_vk2').value=s.vk2||'';
+  $('s_dkga').value=s.dkga||'3';
+}
+function readSettingsForm(){
+  return {
+    iin:$('s_iin').value.trim()||'0000',
+    sgc:$('s_sgc').value.trim(),
+    ti:$('s_ti').value.trim(),
+    krn:$('s_krn').value.trim(),
+    kt:$('s_kt').value.trim(),
+    vk1:$('s_vk1').value.trim().toUpperCase(),
+    vk2:$('s_vk2').value.trim().toUpperCase(),
+    dkga:$('s_dkga').value
+  };
+}
+function settingsComplete(s){
+  if(!s) return false;
+  if(!s.sgc||!s.ti||!s.krn||!s.kt||!s.vk1) return false;
+  if(s.dkga==='3' && !s.vk2) return false;
+  return true;
+}
+function checkWarn(){
+  $('setupWarn').style.display = settingsComplete(loadSettings()) ? 'none':'block';
+}
+
+fillSettingsForm(loadSettings());
+checkWarn();
+
+$('saveSettings').addEventListener('click',()=>{
+  const s=readSettingsForm();
+  const err=$('setErr'); err.innerHTML='';
+  if(!/^[0-9A-Fa-f]{16}$/.test(s.vk1||'')){ err.innerHTML='<div class="err">VK1 يجب أن يكون 16 خانة سداسية (0-9, A-F).</div>'; return; }
+  if(s.dkga==='3' && !/^[0-9A-Fa-f]{16}$/.test(s.vk2||'')){ err.innerHTML='<div class="err">DKGA=3 يتطلب VK2 صحيح (16 خانة سداسية).</div>'; return; }
+  saveSettingsObj(s); checkWarn(); toast('تم الحفظ'); 
+});
+$('exportSettings').addEventListener('click',()=>{
+  const s=readSettingsForm();
+  toast('تم نسخ نسخة الإعدادات JSON'); 
+  copyText(JSON.stringify(s,null,2));
+});
+$('wipeSettings').addEventListener('click',()=>{
+  if(confirm('سيتم حذف كل الإعدادات المحفوظة من هذا الجهاز نهائيًا. متابعة؟')){
+    localStorage.clear(); fillSettingsForm({}); checkWarn(); toast('تم المسح');
+  }
+});
+$('s_dkga').addEventListener('change',()=>{ $('vk2wrap').style.display = $('s_dkga').value==='3'?'block':'none'; });
+$('vk2wrap').style.display = $('s_dkga').value==='3'?'block':'none';
+
+// ---------- TID default (see warning above) ----------
+function defaultTid(d){
+  const base=new Date(2014,0,1,0,0,1).getTime();
+  return Math.floor((d.getTime()-base)/60000);
+}
+$('tid').value=defaultTid(new Date());
+
+// ---------- generate ----------
+function copyText(text){
+  if(window.Android && Android.copyToClipboard){ Android.copyToClipboard(text); return; }
+  const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta);
+  ta.select(); try{document.execCommand('copy');}catch(e){} document.body.removeChild(ta);
+}
+
+$('genBtn').addEventListener('click',()=>{
+  const errBox=$('genErr'); errBox.innerHTML=''; $('resultBox').style.display='none';
+  const s=loadSettings();
+  if(!settingsComplete(s)){ errBox.innerHTML='<div class="err">أكمل الإعدادات أولاً من تبويب "الإعدادات".</div>'; return; }
+  const meter=$('meterNo').value.trim();
+  const kwh=parseFloat($('kwh').value);
+  if(!/^[0-9]{6,20}$/.test(meter)){ errBox.innerHTML='<div class="err">أدخل رقم عداد صحيح.</div>'; return; }
+  if(!(kwh>0)){ errBox.innerHTML='<div class="err">أدخل كمية صحيحة.</div>'; return; }
+
+  const cls=parseInt($('cls').value||'0',10);
+  const sub=parseInt($('sub').value||'0',10);
+  let rnd=$('rnd').value.trim(); rnd = rnd===''? Math.floor(Math.random()*16) : parseInt(rnd,10);
+  let tid=$('tid').value.trim(); tid = tid===''? defaultTid(new Date()) : parseInt(tid,10);
+
+  try{
+    const meterKey = STS.makeMeterKey({iin:s.iin,drn:meter,kt:s.kt,sgc:s.sgc,ti:s.ti,krn:s.krn,vk1:s.vk1,vk2:s.vk2,dkga:s.dkga});
+    const token = STS.tokenCreate(cls,sub,rnd,tid,kwh,meterKey);
+    $('tokenOut').textContent = STS.fmt(token);
+    $('metaOut').textContent = `العداد ${meter} • ${kwh} ك.و.س • Rnd=${rnd} • TID=${tid}`;
+    $('resultBox').style.display='block';
+    $('resultBox').dataset.raw=token;
+  }catch(e){
+    errBox.innerHTML='<div class="err">خطأ: '+e.message+'</div>';
+  }
+});
+
+$('copyBtn').addEventListener('click',()=>{ copyText($('resultBox').dataset.raw||''); toast('تم نسخ الكود'); });
+$('shareBtn').addEventListener('click',()=>{
+  const raw=$('resultBox').dataset.raw||'';
+  const meter=$('meterNo').value.trim(); const kwh=$('kwh').value;
+  const msg=`كود شحن العداد ${meter}\nالكمية: ${kwh} ك.و.س\nالكود: ${STS.fmt(raw)}`;
+  if(window.Android && Android.shareText){ Android.shareText(msg); return; }
+  if(navigator.share){ navigator.share({text:msg}).catch(()=>{}); return; }
+  copyText(msg); toast('تم نسخ النص للمشاركة');
+});
+
+// ---------- calibration ----------
+$('calibBtn').addEventListener('click',()=>{
+  const out=$('calibOut'); out.innerHTML='';
+  const s=loadSettings();
+  if(!settingsComplete(s)){ out.innerHTML='<div class="err">أكمل الإعدادات أولاً.</div>'; return; }
+  const meter=$('c_meter').value.trim();
+  const kwh=parseFloat($('c_kwh').value);
+  const dtVal=$('c_dt').value;
+  const win=parseInt($('c_window').value||'10',10);
+  const cls=parseInt($('c_cls').value||'0',10);
+  const wantRaw=$('c_token').value.replace(/\s+/g,'');
+  if(!meter||!(kwh>0)||!dtVal||!/^[0-9]{20}$/.test(wantRaw)){
+    out.innerHTML='<div class="err">تحقق من جميع الحقول (الكود يجب أن يكون 20 رقمًا).</div>'; return;
+  }
+  let meterKey;
+  try{ meterKey = STS.makeMeterKey({iin:s.iin,drn:meter,kt:s.kt,sgc:s.sgc,ti:s.ti,krn:s.krn,vk1:s.vk1,vk2:s.vk2,dkga:s.dkga}); }
+  catch(e){ out.innerHTML='<div class="err">خطأ في المفتاح: '+e.message+'</div>'; return; }
+
+  const center=defaultTid(new Date(dtVal));
+  let found=[];
+  for(let dt=-win; dt<=win; dt++){
+    const tid=center+dt;
+    for(let rnd=0; rnd<16; rnd++){
+      for(let sub=0; sub<16; sub++){
+        const tok=STS.tokenCreate(cls,sub,rnd,tid,kwh,meterKey);
+        if(tok===wantRaw) found.push({tid,rnd,sub,dt});
+      }
+    }
+  }
+  if(found.length){
+    let rows=found.map(f=>`<tr><td>${f.tid}</td><td>${f.rnd}</td><td>${f.sub}</td><td>${f.dt}</td></tr>`).join('');
+    out.innerHTML='<div class="ok">✅ تطابق! الإعدادات صحيحة. القيم المطابقة:</div>'+
+      '<table class="calib"><tr><th>TID</th><th>Rnd</th><th>Sub</th><th>فرق الدقائق</th></tr>'+rows+'</table>'+
+      '<div class="hint">استخدم أقرب TID لوقت التوليد الفعلي عند الإصدار اللاحق (TID = عدد الدقائق منذ 2014-01-01 00:00:01 بتوقيت الجهاز)، وهذا يؤكد صحة هذا الافتراض لعدادك.</div>';
+  } else {
+    out.innerHTML='<div class="err">لا تطابق ضمن هذا النطاق. جرّب تكبير نطاق البحث، أو تأكد من صحة SGC/TI/KRN/KT/VK1/VK2/DKGA، أو أن رقم العداد والكمية والكود منسوخة بالضبط كما ظهرت في البرنامج الأصلي.</div>';
+  }
+});
+</script>
+</body>
+</html>
